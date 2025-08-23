@@ -37,7 +37,7 @@ private fun AppContent() {
     LaunchedEffect(Unit) {
         when (val result = DatabaseManager.init()) {
             InitResult.Ready -> screen = Screen.Main
-            is InitResult.needUserSelection -> {
+            is InitResult.NeedUserSelection -> {
                 existingDbs = result.existing
                 screen = Screen.DbSelect
             }
@@ -58,7 +58,6 @@ private fun AppContent() {
         Screen.Accountant -> Accountant().Screen { screen = Screen.Main }
     }
 }
-
 @Composable
 private fun DatabaseSelector(options: List<String>, onSelect: (String) -> Unit) {
     var path by remember { mutableStateOf("") }

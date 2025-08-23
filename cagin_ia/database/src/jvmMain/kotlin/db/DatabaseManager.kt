@@ -6,21 +6,22 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.javatime.datetime
 import java.io.File
+import java.time.LocalDate
 
 object DatabaseManager {
     private var dbPath: String? = null
 
+
     sealed interface InitResult {
         data object Ready : InitResult
-        data class needUserSelection(val existing: List<String>) : InitResult
+        data class NeedUserSelection(val existing: List<String>) : InitResult
     }
 
     fun init(searchDir: File = File(".")): InitResult {
         val dbFiles = searchDir.listFiles { _, name -> name.endsWith(".db") }?.toList() ?: emptyList()
         return when (dbFiles.size) {
             0 -> {
-                val path = File(searchDir, "app.db").absolutePath
-                createAndConnect(path)
+                createDatabase(searchDir)
                 InitResult.Ready
             }
             1 -> {
@@ -28,7 +29,7 @@ object DatabaseManager {
                 InitResult.Ready
             }
             else -> {
-                InitResult.needUserSelection(dbFiles.map { it.absolutePath })
+                InitResult.NeedUserSelection(dbFiles.map { it.absolutePath })
             }
         }
     }
@@ -51,11 +52,17 @@ object DatabaseManager {
         }
     }
 
-    private fun createAndConnect(path: String) {
+    fun createDatabase(directory: File = File(".")): String {
+        val now = LocalDate.now()
+        val fileName = "app_${now.year}_${now.monthValue.toString().padStart(2, '0')}.db"
+        val path = File(directory, fileName).absolutePath
         connect(path)
+        return path
     }
+
     fun databaseName(): String = dbPath?.let { File(it).name } ?: ""
 
+    // Table definitions ----------------------------------------------------
     object Banks : Table("banks") {
         val bankId = integer("bank_id").autoIncrement()
         val bankName = text("bank_name")
@@ -94,4 +101,3 @@ object DatabaseManager {
         override val primaryKey = PrimaryKey(paymentId)
     }
 }
-
