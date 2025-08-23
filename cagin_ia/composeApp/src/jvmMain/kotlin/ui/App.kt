@@ -37,7 +37,7 @@ private fun AppContent() {
     LaunchedEffect(Unit) {
         when (val result = DatabaseManager.init()) {
             InitResult.Ready -> screen = Screen.Main
-            is InitResult.NeedUserSelection -> {
+            is InitResult.needUserSelection -> {
                 existingDbs = result.existing
                 screen = Screen.DbSelect
             }

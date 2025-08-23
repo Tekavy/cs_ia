@@ -7,32 +7,14 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.javatime.datetime
 import java.io.File
 
-/**
- * Handles selection and initialization of the application's database.
- *
- * The manager searches for local SQLite database files. If none are found a
- * new database is created using the default schema. When a single database is
- * present it is used automatically. If multiple databases exist the caller is
- * expected to ask the user which one should be used and then provide the
- * chosen path to [selectDatabase].
- */
 object DatabaseManager {
     private var dbPath: String? = null
 
-    /**
-     * Result of [init]. When multiple databases are present the caller should
-     * prompt the user to select one of [existing].
-     */
     sealed interface InitResult {
         data object Ready : InitResult
-        data class NeedUserSelection(val existing: List<String>) : InitResult
+        data class needUserSelection(val existing: List<String>) : InitResult
     }
 
-    /**
-     * Initialises the manager. Creates a new database if none exist, uses the
-     * single existing database or returns [InitResult.NeedUserSelection] when
-     * there are multiple choices.
-     */
     fun init(searchDir: File = File(".")): InitResult {
         val dbFiles = searchDir.listFiles { _, name -> name.endsWith(".db") }?.toList() ?: emptyList()
         return when (dbFiles.size) {
@@ -46,14 +28,11 @@ object DatabaseManager {
                 InitResult.Ready
             }
             else -> {
-                InitResult.NeedUserSelection(dbFiles.map { it.absolutePath })
+                InitResult.needUserSelection(dbFiles.map { it.absolutePath })
             }
         }
     }
 
-    /**
-     * Connects to the database at [path] and ensures all tables exist.
-     */
     fun selectDatabase(path: String) {
         connect(path)
     }
@@ -75,11 +54,8 @@ object DatabaseManager {
     private fun createAndConnect(path: String) {
         connect(path)
     }
-
-    /** Returns the active database file name or an empty string if not set. */
     fun databaseName(): String = dbPath?.let { File(it).name } ?: ""
 
-    // Table definitions ----------------------------------------------------
     object Banks : Table("banks") {
         val bankId = integer("bank_id").autoIncrement()
         val bankName = text("bank_name")
