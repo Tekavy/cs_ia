@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import db.DatabaseManager
 
 class Accountant {
     @Composable
@@ -18,6 +19,7 @@ class Accountant {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Accountant interface")
+            Text("Database: ${DatabaseManager.databaseName()}")
             Button(onClick = onBack) {
                 Text("Back")
             }
