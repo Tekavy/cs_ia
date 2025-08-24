@@ -26,14 +26,14 @@ class Cashier {
         var amount by remember { mutableStateOf("") }
 
         Box(Modifier.fillMaxSize()) {
-            Button(onClick = onBack, modifier = Modifier.align(Alignment.TopStart)) {
+            Button(onClick = onBack, modifier = Modifier.align(Alignment.TopStart).padding(start = 16.dp, top = 16.dp)) {
                 Text("Exit")
             }
             Button(
                 onClick = { DatabaseManager.createDatabase() },
-                modifier = Modifier.align(Alignment.TopStart).padding(start = 16.dp, top = 56.dp)
+                modifier = Modifier.align(Alignment.TopStart).padding(start = 16.dp, top = 500.dp)
             ) {
-                Text("New Database")
+                Text("New Month Database")
             }
 
             Column(
