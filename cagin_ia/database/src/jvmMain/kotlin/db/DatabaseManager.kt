@@ -89,7 +89,6 @@ object DatabaseManager {
     }
 
     fun addPayment(cardBankId: Int, machineId: Int, amount: BigDecimal, cardType: String) {
-        refreshPosMachineBanks()
         transaction {
             val banks = posMachineBanks[machineId] ?: emptyList()
             val commissionRow: ResultRow
@@ -127,6 +126,7 @@ object DatabaseManager {
                 it[Payments.amount] = amount
             }
         }
+        refreshPosMachineBanks()
     }
 
     fun getPayments(): List<PaymentRecord> = transaction {
@@ -242,5 +242,22 @@ object DatabaseManager {
         val rate = decimal("rate", precision = 10, scale = 2)
         val cardType = text("card_type")
         override val primaryKey = PrimaryKey(commissionId)
+    }
+
+    object BanksMachines : Table("banks_machines") {
+        val bmId = integer("bm_id").autoIncrement()
+        val bankId = reference("bank_id", Banks.bankId)
+        val posMachineId = reference("pos_machine_id", PosMachines.posMachineId)
+        val isPrimary = bool("is_primary")
+        override val primaryKey = PrimaryKey(bmId)
+    }
+
+    object Payments : Table("payments") {
+        val paymentId = integer("payment_id").autoIncrement()
+        val bmId = reference("bm_id", BanksMachines.bmId)
+        val commissionId = reference("commission_id", CommissionRates.commissionId)
+        val timestamp = datetime("timestamp")
+        val amount = decimal("amount", precision = 10, scale = 2)
+        override val primaryKey = PrimaryKey(paymentId)
     }
 }
