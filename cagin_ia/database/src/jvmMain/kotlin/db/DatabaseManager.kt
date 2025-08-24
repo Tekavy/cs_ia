@@ -1,8 +1,6 @@
 package db
 
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.javatime.datetime
 import java.io.File
@@ -49,6 +47,7 @@ object DatabaseManager {
                 BanksMachines,
                 Payments
             )
+            adjustInitialData()
         }
     }
 
@@ -62,7 +61,39 @@ object DatabaseManager {
 
     fun databaseName(): String = dbPath?.let { File(it).name } ?: ""
 
-    // Table definitions ----------------------------------------------------
+    private fun adjustInitialData() {
+        val banksEmpty = Banks.selectAll().empty()
+        val posEmpty = PosMachines.selectAll().empty()
+        if (banksEmpty && posEmpty) {
+            val bankAId = Banks.insert { it[bankName] = "bankA" }[Banks.bankId]
+            val bankBId = Banks.insert { it[bankName] = "bankB" }[Banks.bankId]
+            val bankCId = Banks.insert { it[bankName] = "bankC" }[Banks.bankId]
+            val bankDId = Banks.insert { it[bankName] = "bankD" }[Banks.bankId]
+
+            val posAId = PosMachines.insert { it[location] = "posmachineA" }[PosMachines.posMachineId]
+            val posBId = PosMachines.insert { it[location] = "posmachineB" }[PosMachines.posMachineId]
+
+            BanksMachines.insert {
+                it[bankId] = bankAId
+                it[posMachineId] = posAId
+                it[isPrimary] = true
+            }
+            listOf(bankCId, bankDId).forEach { bankIdValue ->
+                BanksMachines.insert {
+                    it[bankId] = bankIdValue
+                    it[posMachineId] = posAId
+                    it[isPrimary] = false
+                }
+            }
+            BanksMachines.insert {
+                it[bankId] = bankBId
+                it[posMachineId] = posBId
+                it[isPrimary] = true
+            }
+        }
+    }
+
+    //  ------------------------------------------------------------------------------
     object Banks : Table("banks") {
         val bankId = integer("bank_id").autoIncrement()
         val bankName = text("bank_name")
