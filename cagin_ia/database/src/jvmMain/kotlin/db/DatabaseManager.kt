@@ -5,9 +5,12 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.javatime.datetime
 import java.io.File
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.math.BigDecimal
 
 object DatabaseManager {
     private var dbPath: String? = null
+    private val posMachineBanks = mutableMapOf<Int, List<Int>>()
 
 
     sealed interface InitResult {
@@ -22,10 +25,12 @@ object DatabaseManager {
                 createDatabase(searchDir)
                 InitResult.Ready
             }
+
             1 -> {
                 connect(dbFiles[0].absolutePath)
                 InitResult.Ready
             }
+
             else -> {
                 InitResult.NeedUserSelection(dbFiles.map { it.absolutePath })
             }
@@ -49,6 +54,7 @@ object DatabaseManager {
             )
             adjustInitialData()
         }
+        refreshPosMachineBanks()
     }
 
     fun createDatabase(directory: File = File(".")): String {
@@ -60,6 +66,80 @@ object DatabaseManager {
     }
 
     fun databaseName(): String = dbPath?.let { File(it).name } ?: ""
+
+    data class PaymentRecord(
+        val paymentId: Int,
+        val bmId: Int,
+        val commissionId: Int,
+        val day: Int,
+        val amount: BigDecimal
+    )
+
+    private fun refreshPosMachineBanks() {
+        val map = mutableMapOf<Int, MutableList<Int>>()
+        transaction {
+            BanksMachines.selectAll().forEach { row ->
+                val pos = row[BanksMachines.posMachineId]
+                val bank = row[BanksMachines.bankId]
+                map.getOrPut(pos) { mutableListOf() }.add(bank)
+            }
+        }
+        posMachineBanks.clear()
+        posMachineBanks.putAll(map.mapValues { it.value.toList() })
+    }
+
+    fun addPayment(cardBankId: Int, machineId: Int, amount: BigDecimal, cardType: String) {
+        refreshPosMachineBanks()
+        transaction {
+            val banks = posMachineBanks[machineId] ?: emptyList()
+            val commissionRow: ResultRow
+            val bmId: Int
+            if (banks.contains(cardBankId)) {
+                val bmRow = BanksMachines.select {
+                    (BanksMachines.bankId eq cardBankId) and (BanksMachines.posMachineId eq machineId)
+                }.single()
+                bmId = bmRow[BanksMachines.bmId]
+                val isInternal = bmRow[BanksMachines.isPrimary]
+                commissionRow = CommissionRates.select {
+                    (CommissionRates.bankId eq cardBankId) and
+                            (CommissionRates.isInternal eq isInternal) and
+                            (CommissionRates.cardType eq cardType)
+                }.single()
+            } else {
+                val primaryRow = BanksMachines.select {
+                    (BanksMachines.posMachineId eq machineId) and (BanksMachines.isPrimary eq true)
+                }.single()
+                bmId = primaryRow[BanksMachines.bmId]
+                val primaryBankId = primaryRow[BanksMachines.bankId]
+                commissionRow = CommissionRates.select {
+                    (CommissionRates.bankId eq primaryBankId) and
+                            (CommissionRates.isInternal eq false) and
+                            (CommissionRates.cardType eq cardType)
+                }.single()
+            }
+            val commissionId = commissionRow[CommissionRates.commissionId]
+            val day = LocalDateTime.now().dayOfMonth
+            val timestamp = LocalDateTime.of(0, 1, day, 0, 0)
+            Payments.insert {
+                it[Payments.bmId] = bmId
+                it[Payments.commissionId] = commissionId
+                it[Payments.timestamp] = timestamp
+                it[Payments.amount] = amount
+            }
+        }
+    }
+
+    fun getPayments(): List<PaymentRecord> = transaction {
+        Payments.selectAll().map {
+            PaymentRecord(
+                it[Payments.paymentId],
+                it[Payments.bmId],
+                it[Payments.commissionId],
+                it[Payments.timestamp].dayOfMonth,
+                it[Payments.amount]
+            )
+        }
+    }
 
     private fun adjustInitialData() {
         val banksEmpty = Banks.selectAll().empty()
@@ -90,6 +170,55 @@ object DatabaseManager {
                 it[posMachineId] = posBId
                 it[isPrimary] = true
             }
+
+            CommissionRates.insert {
+                it[bankId] = bankAId
+                it[isInternal] = true
+                it[rate] = BigDecimal("0.01")
+                it[cardType] = "credit card"
+            }
+            CommissionRates.insert {
+                it[bankId] = bankAId
+                it[isInternal] = false
+                it[rate] = BigDecimal("0.04")
+                it[cardType] = "credit card"
+            }
+            CommissionRates.insert {
+                it[bankId] = bankBId
+                it[isInternal] = true
+                it[rate] = BigDecimal("0.02")
+                it[cardType] = "credit card"
+            }
+            CommissionRates.insert {
+                it[bankId] = bankBId
+                it[isInternal] = false
+                it[rate] = BigDecimal("0.06")
+                it[cardType] = "credit card"
+            }
+            CommissionRates.insert {
+                it[bankId] = bankCId
+                it[isInternal] = true
+                it[rate] = BigDecimal("0.03")
+                it[cardType] = "credit card"
+            }
+            CommissionRates.insert {
+                it[bankId] = bankCId
+                it[isInternal] = false
+                it[rate] = BigDecimal("0.07")
+                it[cardType] = "credit card"
+            }
+            CommissionRates.insert {
+                it[bankId] = bankDId
+                it[isInternal] = true
+                it[rate] = BigDecimal("0.05")
+                it[cardType] = "credit card"
+            }
+            CommissionRates.insert {
+                it[bankId] = bankDId
+                it[isInternal] = false
+                it[rate] = BigDecimal("0.08")
+                it[cardType] = "credit card"
+            }
         }
     }
 
@@ -113,22 +242,5 @@ object DatabaseManager {
         val rate = decimal("rate", precision = 10, scale = 2)
         val cardType = text("card_type")
         override val primaryKey = PrimaryKey(commissionId)
-    }
-
-    object BanksMachines : Table("banks_machines") {
-        val bmId = integer("bm_id").autoIncrement()
-        val bankId = reference("bank_id", Banks.bankId)
-        val posMachineId = reference("pos_machine_id", PosMachines.posMachineId)
-        val isPrimary = bool("is_primary")
-        override val primaryKey = PrimaryKey(bmId)
-    }
-
-    object Payments : Table("payments") {
-        val paymentId = integer("payment_id").autoIncrement()
-        val bmId = reference("bm_id", BanksMachines.bmId)
-        val commissionId = reference("commission_id", CommissionRates.commissionId)
-        val timestamp = datetime("timestamp")
-        val amount = decimal("amount", precision = 10, scale = 2)
-        override val primaryKey = PrimaryKey(paymentId)
     }
 }
