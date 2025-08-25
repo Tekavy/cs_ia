@@ -74,8 +74,8 @@ class Cashier {
                 Button(onClick = {
                     val amt = amount.toBigDecimalOrNull() ?: BigDecimal.ZERO
                     val bankId = DatabaseManager.findBankID(bankName) ?: 0
-                    val machineIdInt = DatabaseManager.findposmachineID(machineName) ?: 0
-                    DatabaseManager.addPayment(bankId, machineIdInt, amt, cardType)
+                    val posmachineIdInt = DatabaseManager.findposmachineID(machineName) ?: 0
+                    DatabaseManager.addPayment(bankId, posmachineIdInt, amt, cardType)
                     bankName = ""
                     machineName = ""
                     amount = ""

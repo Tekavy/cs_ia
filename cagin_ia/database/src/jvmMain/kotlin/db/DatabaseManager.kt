@@ -239,7 +239,7 @@ object DatabaseManager {
 
     object PosMachines : Table("pos_machines") {
         val posMachineId = integer("pos_machine_id").autoIncrement()
-        val name = text("name")
+        val name = text("name").default("")
         override val primaryKey = PrimaryKey(posMachineId)
     }
 
