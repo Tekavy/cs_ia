@@ -22,8 +22,8 @@ import java.math.BigDecimal
 class Cashier {
     @Composable
     fun Screen(onBack: () -> Unit) {
-        var cardBankId by remember { mutableStateOf("") }
-        var machineId by remember { mutableStateOf("") }
+        var bankName by remember { mutableStateOf("") }
+        var machineName by remember { mutableStateOf("") }
         var amount by remember { mutableStateOf("") }
         var cardType by remember { mutableStateOf("credit card") }
 
@@ -44,10 +44,10 @@ class Cashier {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Column(horizontalAlignment = Alignment.Start) {
-                    Text("Card BankID")
+                    Text("Card Bank Name")
                     TextField(
-                        value = cardBankId,
-                        onValueChange = { cardBankId = it }
+                        value = bankName,
+                        onValueChange = { bankName = it }
                     )
                 }
                 Column(horizontalAlignment = Alignment.Start) {
@@ -58,10 +58,10 @@ class Cashier {
                     )
                 }
                 Column(horizontalAlignment = Alignment.Start) {
-                    Text("Machine Name")
+                    Text("POS Machine Name")
                     TextField(
-                        value = machineId,
-                        onValueChange = { machineId = it }
+                        value = machineName,
+                        onValueChange = { machineName = it }
                     )
                 }
                 Column(horizontalAlignment = Alignment.Start) {
@@ -73,11 +73,11 @@ class Cashier {
                 }
                 Button(onClick = {
                     val amt = amount.toBigDecimalOrNull() ?: BigDecimal.ZERO
-                    val bankId = cardBankId.toIntOrNull() ?: 0
-                    val machineIdInt = machineId.toIntOrNull() ?: 0
+                    val bankId = DatabaseManager.findBankID(bankName) ?: 0
+                    val machineIdInt = DatabaseManager.findposmachineID(machineName) ?: 0
                     DatabaseManager.addPayment(bankId, machineIdInt, amt, cardType)
-                    cardBankId = ""
-                    machineId = ""
+                    bankName = ""
+                    machineName = ""
                     amount = ""
                     cardType = "credit card"
                 }) {

@@ -67,6 +67,14 @@ object DatabaseManager {
 
     fun databaseName(): String = dbPath?.let { File(it).name } ?: ""
 
+    fun findBankID(bankName: String): Int? = transaction {
+        Banks.select { Banks.bankName eq bankName }.singleOrNull()?.get(Banks.bankId)
+    }
+
+    fun findposmachineID(posMachineName: String): Int? = transaction {
+        PosMachines.select { PosMachines.name eq posMachineName }.singleOrNull()?.get(PosMachines.posMachineId)
+    }
+
     data class PaymentRecord(
         val paymentId: Int,
         val bmId: Int,
@@ -150,8 +158,8 @@ object DatabaseManager {
             val bankCId = Banks.insert { it[bankName] = "bankC" }[Banks.bankId]
             val bankDId = Banks.insert { it[bankName] = "bankD" }[Banks.bankId]
 
-            val posAId = PosMachines.insert { it[location] = "posmachineA" }[PosMachines.posMachineId]
-            val posBId = PosMachines.insert { it[location] = "posmachineB" }[PosMachines.posMachineId]
+            val posAId = PosMachines.insert { it[name] = "posmachineA" }[PosMachines.posMachineId]
+            val posBId = PosMachines.insert { it[name] = "posmachineB" }[PosMachines.posMachineId]
 
             BanksMachines.insert {
                 it[bankId] = bankAId
@@ -231,7 +239,7 @@ object DatabaseManager {
 
     object PosMachines : Table("pos_machines") {
         val posMachineId = integer("pos_machine_id").autoIncrement()
-        val location = text("location")
+        val name = text("name")
         override val primaryKey = PrimaryKey(posMachineId)
     }
 
