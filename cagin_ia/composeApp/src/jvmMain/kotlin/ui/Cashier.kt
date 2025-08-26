@@ -17,13 +17,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import db.DatabaseManager
+import java.math.BigDecimal
 
 class Cashier {
     @Composable
     fun Screen(onBack: () -> Unit) {
-        var cardBank by remember { mutableStateOf("") }
+        var bankName by remember { mutableStateOf("") }
         var machineName by remember { mutableStateOf("") }
         var amount by remember { mutableStateOf("") }
+        var cardType by remember { mutableStateOf("credit card") }
 
         Box(Modifier.fillMaxSize()) {
             Button(onClick = onBack, modifier = Modifier.align(Alignment.TopStart).padding(start = 16.dp, top = 16.dp)) {
@@ -42,14 +44,21 @@ class Cashier {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Column(horizontalAlignment = Alignment.Start) {
-                    Text("Card Bank")
+                    Text("Card Bank Name")
                     TextField(
-                        value = cardBank,
-                        onValueChange = { cardBank = it }
+                        value = bankName,
+                        onValueChange = { bankName = it }
                     )
                 }
                 Column(horizontalAlignment = Alignment.Start) {
-                    Text("Machine Name")
+                    Text("Card Type")
+                    TextField(
+                        value = cardType,
+                        onValueChange = { cardType = it }
+                    )
+                }
+                Column(horizontalAlignment = Alignment.Start) {
+                    Text("POS Machine Name")
                     TextField(
                         value = machineName,
                         onValueChange = { machineName = it }
@@ -62,7 +71,20 @@ class Cashier {
                         onValueChange = { amount = it }
                     )
                 }
+                Button(onClick = {
+                    val amt = amount.toBigDecimalOrNull() ?: BigDecimal.ZERO
+                    val bankId = DatabaseManager.findBankID(bankName) ?: 0
+                    val posmachineIdInt = DatabaseManager.findposmachineID(machineName) ?: 0
+                    DatabaseManager.addPayment(bankId, posmachineIdInt, amt, cardType)
+                    bankName = ""
+                    machineName = ""
+                    amount = ""
+                    cardType = "credit card"
+                }) {
+                    Text("Add Payment")
+                }
             }
+
         }
     }
 }
