@@ -3,8 +3,10 @@ package ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -71,6 +73,8 @@ class Cashier {
                         onValueChange = { amount = it }
                     )
                 }
+
+                Spacer(modifier = Modifier.size(45.dp))
                 Button(onClick = {
                     val amt = amount.toBigDecimalOrNull() ?: BigDecimal.ZERO
                     val bankId = DatabaseManager.findBankID(bankName) ?: 0

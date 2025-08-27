@@ -7,6 +7,7 @@ import java.io.File
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.math.BigDecimal
+import kotlin.collections.forEach
 
 object DatabaseManager {
     private var dbPath: String? = null
@@ -65,7 +66,7 @@ object DatabaseManager {
         return path
     }
 
-    fun databaseName(): String = dbPath?.let { File(it).name } ?: ""
+    fun getdatabaseName(): String = dbPath?.let { File(it).name } ?: ""
 
     fun findBankID(bankName: String): Int? = transaction {
         Banks.select { Banks.bankName eq bankName }.singleOrNull()?.get(Banks.bankId)
@@ -130,24 +131,56 @@ object DatabaseManager {
 
     data class PaymentRecord(
         val paymentId: Int,
-        val bmId: Int,
-        val commissionId: Int,
+        val bankName: String,
+        val posMachineName: String,
+        val commissionrate: BigDecimal,
         val day: Int,
         val amount: BigDecimal
     )
 
-    fun getPayments(): List<PaymentRecord> = transaction {
-        Payments.selectAll().map {
+    fun queryPayments(
+        bankName: String? = null,
+        posMachineName: String? = null,
+        isInternal: Boolean? = null,
+        dayFrom: Int? = null,
+        dayTo: Int? = null
+    ): List<PaymentRecord> = transaction {
+        val query = Payments
+            .join(BanksMachines, JoinType.INNER, Payments.bmId, BanksMachines.bmId)
+            .join(PosMachines, JoinType.INNER, BanksMachines.posMachineId, PosMachines.posMachineId)
+            .join(CommissionRates, JoinType.INNER, Payments.commissionId, CommissionRates.commissionId)
+            .join(Banks, JoinType.INNER, CommissionRates.bankId, Banks.bankId)
+            .selectAll()
+
+        bankName?.let { query.andWhere { Banks.bankName eq it } }
+        posMachineName?.let { query.andWhere { PosMachines.name eq it } }
+        isInternal?.let { query.andWhere { CommissionRates.isInternal eq it } }
+        dayFrom?.let { start ->
+            query.andWhere { Payments.timestamp greaterEq LocalDateTime.of(0, 1, start, 0, 0) }
+        }
+        dayTo?.let { end ->
+            query.andWhere { Payments.timestamp lessEq LocalDateTime.of(0, 1, end, 23, 59, 59) }
+        }
+
+        query.map {
             PaymentRecord(
                 it[Payments.paymentId],
-                it[Payments.bmId],
-                it[Payments.commissionId],
+                it[Banks.bankName],
+                it[PosMachines.name],
+                it[CommissionRates.rate],
                 it[Payments.timestamp].dayOfMonth,
                 it[Payments.amount]
             )
         }
     }
 
+    fun calcsum(paymentlist: List<PaymentRecord>): Double{
+        var sum: Double = 0.0
+        paymentlist.forEach {p ->  sum  += (p.commissionrate * p.amount).toDouble() }
+        return sum
+    }
+
+    //---------------------------------------------------------------------------------------
     private fun adjustInitialData() {
         val banksEmpty = Banks.selectAll().empty()
         val posEmpty = PosMachines.selectAll().empty()
