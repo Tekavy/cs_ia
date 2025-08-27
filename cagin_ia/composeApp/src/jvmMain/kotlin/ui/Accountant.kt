@@ -26,7 +26,7 @@ class Accountant {
             Text("Accountant interface")
             Text("Database: ${DatabaseManager.databaseName()}")
             payments.forEach { p ->
-                Text("Payment ${'$'}{p.paymentId}: bm ${'$'}{p.bmId}, commissionId ${'$'}{p.commissionId}, day ${'$'}{p.day}, amount ${'$'}{p.amount}")
+                Text("Payment ${p.paymentId}: bm ${p.bmId}, commissionId ${p.commissionId}, day ${p.day}, amount ${p.amount}")
             }
             Button(onClick = { payments = DatabaseManager.getPayments() }) {
                 Text("Refresh")

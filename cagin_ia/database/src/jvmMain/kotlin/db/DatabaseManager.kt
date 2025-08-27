@@ -74,15 +74,6 @@ object DatabaseManager {
     fun findposmachineID(posMachineName: String): Int? = transaction {
         PosMachines.select { PosMachines.name eq posMachineName }.singleOrNull()?.get(PosMachines.posMachineId)
     }
-
-    data class PaymentRecord(
-        val paymentId: Int,
-        val bmId: Int,
-        val commissionId: Int,
-        val day: Int,
-        val amount: BigDecimal
-    )
-
     private fun refreshPosMachineBanks() {
         val map = mutableMapOf<Int, MutableList<Int>>()
         transaction {
@@ -136,6 +127,14 @@ object DatabaseManager {
         }
         refreshPosMachineBanks()
     }
+
+    data class PaymentRecord(
+        val paymentId: Int,
+        val bmId: Int,
+        val commissionId: Int,
+        val day: Int,
+        val amount: BigDecimal
+    )
 
     fun getPayments(): List<PaymentRecord> = transaction {
         Payments.selectAll().map {
