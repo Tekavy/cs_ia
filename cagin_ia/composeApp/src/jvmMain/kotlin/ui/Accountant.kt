@@ -3,6 +3,7 @@ package ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
@@ -29,55 +30,68 @@ class Accountant {
         var payments by remember { mutableStateOf(DatabaseManager.queryPayments()) }
 
         Box(Modifier.fillMaxSize()) {
-            Button(onClick = onBack, modifier = Modifier.align(Alignment.TopStart).padding(start = 16.dp, top = 16.dp)) {
+            Button(
+                onClick = onBack,
+                modifier = Modifier.align(Alignment.TopStart).padding(start = 16.dp, top = 16.dp)
+            ) {
                 Text("Back")
             }
-            Column(
+            Row(
                 modifier = Modifier.align(Alignment.Center),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalArrangement = Arrangement.spacedBy(32.dp),
+                verticalAlignment = Alignment.Top
             ) {
-                Column(horizontalAlignment = Alignment.Start) {
-                    Text("Bank Name")
-                    TextField(value = bankName, onValueChange = { bankName = it })
-                }
-                Column(horizontalAlignment = Alignment.Start) {
-                    Text("POS Machine Name")
-                    TextField(value = machineName, onValueChange = { machineName = it })
-                }
-                Column(horizontalAlignment = Alignment.Start) {
-                    Text("Internal (true/false)")
-                    TextField(value = internalText, onValueChange = { internalText = it })
-                }
-                Column(horizontalAlignment = Alignment.Start) {
-                    Text("Day From")
-                    TextField(value = dayFrom, onValueChange = { dayFrom = it })
-                }
-                Column(horizontalAlignment = Alignment.Start) {
-                    Text("Day To")
-                    TextField(value = dayTo, onValueChange = { dayTo = it })
-                }
-                Button(onClick = {
-                    val internal = when (internalText.trim().lowercase()) {
-                        "true", "internal" -> true
-                        "false", "external" -> false
-                        else -> null
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Column(horizontalAlignment = Alignment.Start) {
+                        Text("Bank Name")
+                        TextField(value = bankName, onValueChange = { bankName = it })
                     }
-                    val from = dayFrom.toIntOrNull()
-                    val to = dayTo.toIntOrNull()
-                    payments = DatabaseManager.queryPayments(
-                        bankName.ifBlank { null },
-                        machineName.ifBlank { null },
-                        internal,
-                        from,
-                        to
-                    )
-                }) {
-                    Text("Run Query")
+                    Column(horizontalAlignment = Alignment.Start) {
+                        Text("POS Machine Name")
+                        TextField(value = machineName, onValueChange = { machineName = it })
+                    }
+                    Column(horizontalAlignment = Alignment.Start) {
+                        Text("Internal (true/false)")
+                        TextField(value = internalText, onValueChange = { internalText = it })
+                    }
+                    Column(horizontalAlignment = Alignment.Start) {
+                        Text("Day From")
+                        TextField(value = dayFrom, onValueChange = { dayFrom = it })
+                    }
+                    Column(horizontalAlignment = Alignment.Start) {
+                        Text("Day To")
+                        TextField(value = dayTo, onValueChange = { dayTo = it })
+                    }
+                    Button(onClick = {
+                        val internal = when (internalText.trim().lowercase()) {
+                            "true", "internal" -> true
+                            "false", "external" -> false
+                            else -> null
+                        }
+                        val from = dayFrom.toIntOrNull()
+                        val to = dayTo.toIntOrNull()
+                        payments = DatabaseManager.queryPayments(
+                            bankName.ifBlank { null },
+                            machineName.ifBlank { null },
+                            internal,
+                            from,
+                            to
+                        )
+                    }) {
+                        Text("Run Query")
+                    }
                 }
-                Text("Database: ${'$'}{DatabaseManager.databaseName()}")
-                payments.forEach { p ->
-                    Text("${'$'}{p.paymentId}: bank ${'$'}{p.bankName}, pos ${'$'}{p.posMachineName}, internal ${'$'}{p.isInternal}, day ${'$'}{p.day}, amount ${'$'}{p.amount}")
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text("Database: ${'$'}{DatabaseManager.databaseName()}")
+                    payments.forEach { p ->
+                        Text("${'$'}{p.paymentId}: bank ${'$'}{p.bankName}, pos ${'$'}{p.posMachineName}, internal ${'$'}{p.isInternal}, day ${'$'}{p.day}, amount ${'$'}{p.amount}")
+                    }
                 }
             }
         }
