@@ -35,11 +35,11 @@ kotlin {
 
 compose.desktop {
     application {
-        mainClass = "org.cagin.MainKt"
+        mainClass = "org.cs.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "org.cagin"
+            packageName = "org.cs"
             packageVersion = "1.0.0"
         }
     }
