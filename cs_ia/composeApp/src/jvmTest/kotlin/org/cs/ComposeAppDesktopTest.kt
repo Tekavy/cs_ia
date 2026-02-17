@@ -1,4 +1,4 @@
-package org.cagin
+package org.cs
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

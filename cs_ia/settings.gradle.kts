@@ -1,4 +1,4 @@
-rootProject.name = "cagin_ia"
+rootProject.name = "cs_ia"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

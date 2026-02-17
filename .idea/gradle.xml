@@ -4,12 +4,12 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
-        <option name="externalProjectPath" value="$PROJECT_DIR$/cagin_ia" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/cs_ia" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$/cagin_ia" />
-            <option value="$PROJECT_DIR$/cagin_ia/composeApp" />
-            <option value="$PROJECT_DIR$/cagin_ia/database" />
+            <option value="$PROJECT_DIR$/cs_ia" />
+            <option value="$PROJECT_DIR$/cs_ia/composeApp" />
+            <option value="$PROJECT_DIR$/cs_ia/database" />
           </set>
         </option>
       </GradleProjectSettings>
